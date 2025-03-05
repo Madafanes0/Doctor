@@ -5,7 +5,7 @@ import AppointmentList from './components/AppointmentList';
 function App() {
   return (
     <Router>
-      <div className='flex justify-center w-full'>
+      <div className='flex justify-center w-full '>
         {/* Navbar */}
         <nav className="bg-blue-600 text-white fixed top-0 left-0 w-full shadow-lg z-50">
           <div className="container w-full flex justify-between items-center px-6 py-4">
