@@ -1,35 +1,37 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import DoctorDashboard from './components/DoctorDashboard';
+import AppointmentList from './components/AppointmentList';
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <Router>
+      <div className='flex justify-center w-full '>
+        {/* Navbar */}
+        <nav className="bg-blue-600 text-white fixed top-0 left-0 w-full shadow-lg z-50">
+          <div className="container w-full flex justify-between items-center px-6 py-4">
+            {/* Logo */}
+            <h1 className="text-xl font-bold">Clínica</h1>
+
+            {/* Menú de navegación */}
+            <div className="flex space-x-8">
+              <Link to="/" className="hover:bg-blue-700 px-4 py-2 rounded">Inicio</Link>
+              <Link to="/dashboard" className="hover:bg-blue-700 px-4 py-2 rounded">Panel Médico</Link>
+              <Link to="/appointments" className="hover:bg-blue-700 px-4 py-2 rounded">Citas</Link>
+            </div>
+          </div>
+        </nav>
+
+        {/* Espaciador para que el contenido no quede cubierto por la navbar */}
+        <div className="pt-20">
+          <Routes>
+            <Route path="/" element={<h2 className="text-center mt-10 text-2xl">Bienvenido a la Clínica</h2>} />
+            <Route path="/dashboard" element={<DoctorDashboard />} />
+            <Route path="/appointments" element={<AppointmentList />} />
+          </Routes>
+        </div>
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    </Router>
+  );
 }
 
-export default App
+export default App;
