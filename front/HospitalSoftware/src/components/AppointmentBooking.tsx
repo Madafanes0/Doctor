@@ -1,7 +1,7 @@
-// AppointmentBooking.tsx
 import React, { useState, useEffect } from 'react';
-import { db } from '../firebase-config';
-import { collection, getDocs, addDoc } from 'firebase/firestore';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../../firebase-config';
+import { useNavigate } from 'react-router-dom';
 
 const AppointmentBooking: React.FC = () => {
   const [doctors, setDoctors] = useState<{ id: string; name: string }[]>([]);
@@ -9,27 +9,72 @@ const AppointmentBooking: React.FC = () => {
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
   const [reason, setReason] = useState('');
+  const navigate = useNavigate();
+  
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
 
   useEffect(() => {
     const fetchDoctors = async () => {
-      const doctorCollection = collection(db, 'medico');
-      const doctorSnapshot = await getDocs(doctorCollection);
-      setDoctors(doctorSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any)));
+      try {
+        const response = await fetch('http://localhost:5032/api/doctors');
+        const data = await response.json();
+        setDoctors(data);
+      } catch (error) {
+        console.error('Error fetching doctors:', error);
+      }
     };
     fetchDoctors();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await addDoc(collection(db, 'citas'), {
+    
+    const user = auth.currentUser;
+    if (!user) {
+      alert("Debes iniciar sesión antes de agendar una cita.");
+      return;
+    }
+
+    const newAppointment = {
       medicoId: selectedDoctor,
       fecha: date,
       hora: time,
       estado: 'Pendiente',
-      pacienteId: 'some-patient-id', // Replace with actual user session
+      pacienteId: user.uid,
       motivo: reason
-    });
-    alert('Cita agendada con éxito');
+    };
+
+    try {
+      const response = await fetch('http://localhost:5032/api/appointments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(newAppointment)
+      });
+
+      if (response.ok) {
+        alert('Cita agendada con éxito');
+      } else {
+        console.error('Error creating appointment');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      setShowLoginModal(false);
+      navigate('/patient-appointments');
+    } catch (err) {
+      setError('Correo o contraseña incorrectos');
+    }
   };
 
   return (
@@ -64,6 +109,40 @@ const AppointmentBooking: React.FC = () => {
         </div>
         <button type="submit" className="bg-blue-500 text-white p-2 rounded w-full">Agendar Cita</button>
       </form>
+
+      <button onClick={() => setShowLoginModal(true)} className="mt-4 bg-gray-500 text-white p-2 rounded w-full">
+        Ver Mis Citas
+      </button>
+
+      {showLoginModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white p-6 rounded shadow-md w-1/3">
+            <h2 className="text-xl font-bold mb-4">Iniciar Sesión</h2>
+            {error && <p className="text-red-500">{error}</p>}
+            <form onSubmit={handleLogin}>
+              <input
+                type="email"
+                placeholder="Correo electrónico"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="border p-2 w-full mb-2"
+                required
+              />
+              <input
+                type="password"
+                placeholder="Contraseña"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="border p-2 w-full mb-2"
+                required
+              />
+              <button type="submit" className="bg-blue-500 text-white p-2 rounded w-full">
+                Iniciar Sesión
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,18 +1,23 @@
-
-// AppointmentList.tsx
 import React, { useEffect, useState } from 'react';
-import { db } from '../../firebase-config';
-import { collection, getDocs } from 'firebase/firestore';
+import { auth } from '../../firebase-config';
 
 const AppointmentList: React.FC = () => {
   const [appointments, setAppointments] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchAppointments = async () => {
-      const appointmentCollection = collection(db, 'citas');
-      const appointmentSnapshot = await getDocs(appointmentCollection);
-      setAppointments(appointmentSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      const user = auth.currentUser;
+      if (!user) return;
+
+      try {
+        const response = await fetch(`http://localhost:5032/api/appointments?medicoId=${user.uid}`);
+        const data = await response.json();
+        setAppointments(data);
+      } catch (error) {
+        console.error('Error fetching appointments:', error);
+      }
     };
+
     fetchAppointments();
   }, []);
 
@@ -23,7 +28,6 @@ const AppointmentList: React.FC = () => {
           <tr className="bg-gray-100 text-gray-700 uppercase text-sm">
             <th className="py-3 px-6">Fecha</th>
             <th className="py-3 px-6">Hora</th>
-            <th className="py-3 px-6">Médico/Paciente</th>
             <th className="py-3 px-6">Motivo</th>
             <th className="py-3 px-6">Estado</th>
           </tr>
@@ -33,7 +37,6 @@ const AppointmentList: React.FC = () => {
             <tr key={appointment.id} className="border-b hover:bg-gray-50">
               <td className="py-3 px-6">{appointment.fecha}</td>
               <td className="py-3 px-6">{appointment.hora}</td>
-              <td className="py-3 px-6">{appointment.medicoId}</td>
               <td className="py-3 px-6">{appointment.motivo}</td>
               <td className="py-3 px-6">{appointment.estado}</td>
             </tr>
